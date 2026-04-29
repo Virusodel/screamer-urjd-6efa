@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Проверка безопасности</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        .captcha-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #1a1a2e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+        
+        .captcha-box {
+            background: #16213e;
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            border: 1px solid #0f3460;
+        }
+        
+        .captcha-box h2 {
+            color: #e94560;
+            margin-bottom: 10px;
+            font-family: Arial, sans-serif;
+        }
+        
+        .captcha-box p {
+            color: #ddd;
+            margin-bottom: 20px;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+        }
+        
+        .captcha-checkbox {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            background: #0f3460;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .captcha-checkbox:hover {
+            background: #1a4a7a;
+        }
+        
+        .checkbox-icon {
+            width: 24px;
+            height: 24px;
+            border: 2px solid #e94560;
+            border-radius: 4px;
+            background: transparent;
+            display: inline-block;
+            position: relative;
+        }
+        
+        .checkbox-icon.checked::after {
+            content: '✓';
+            position: absolute;
+            color: #e94560;
+            font-size: 18px;
+            top: -2px;
+            left: 4px;
+        }
+        
+        .captcha-checkbox span {
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        
+        .fullscreen-media {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: black;
+            z-index: 20;
+            display: none;
+        }
+        
+        .fullscreen-media video,
+        .fullscreen-media img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        
+        body {
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+
+<div class="captcha-container" id="captchaContainer">
+    <div class="captcha-box">
+        <h2>🔒 Проверка безопасности</h2>
+        <p>Подтвердите, что вы не робот</p>
+        <div class="captcha-checkbox" id="captchaCheckbox">
+            <div class="checkbox-icon" id="checkboxIcon"></div>
+            <span>Я не робот</span>
+        </div>
+    </div>
+</div>
+
+<div class="fullscreen-media" id="fullscreenMedia">
+    <img id="screamMedia" src="scream.jpg" style="width: 100%; height: 100%; object-fit: cover;">
+</div>
+
+<audio id="screamAudio" src="krikir.mp3" preload="auto"></audio>
+
+<script>
+    const mediaElement = document.getElementById('screamMedia');
+    const audioElement = document.getElementById('screamAudio');
+    const fullscreenDiv = document.getElementById('fullscreenMedia');
+    const captchaDiv = document.getElementById('captchaContainer');
+    const checkbox = document.getElementById('captchaCheckbox');
+    const checkboxIcon = document.getElementById('checkboxIcon');
+    
+    let clicked = false;
+    let audioPlayed = false;
+    
+    function requestFullscreen(element) {
+        if (element.requestFullscreen) {
+            element.requestFullscreen();
+        } else if (element.webkitRequestFullscreen) {
+            element.webkitRequestFullscreen();
+        } else if (element.msRequestFullscreen) {
+            element.msRequestFullscreen();
+        }
+    }
+    
+    function playScream() {
+        if (audioPlayed) return;
+        audioPlayed = true;
+        
+        // Показываем полноэкранное медиа
+        fullscreenDiv.style.display = 'block';
+        captchaDiv.style.display = 'none';
+        
+        // Включаем полноэкранный режим
+        requestFullscreen(fullscreenDiv);
+        
+        // Запускаем видео/гифку
+        if (mediaElement.tagName === 'VIDEO') {
+            mediaElement.muted = false;
+            mediaElement.play().catch(function() {});
+        }
+        
+        // Запускаем звук
+        audioElement.play().catch(function() {
+            // Если автозапуск заблокирован, пробуем после взаимодействия
+            document.body.addEventListener('click', function playOnClick() {
+                audioElement.play();
+                document.body.removeEventListener('click', playOnClick);
+            });
+        });
+        
+        // Вибрация на телефоне (если поддерживается)
+        if (navigator.vibrate) {
+            navigator.vibrate([500, 200, 500, 200, 1000]);
+        }
+    }
+    
+    checkbox.addEventListener('click', function() {
+        if (clicked) return;
+        clicked = true;
+        
+        // Анимация галочки
+        checkboxIcon.classList.add('checked');
+        
+        // Небольшая задержка перед скримером (эффект загрузки)
+        setTimeout(function() {
+            playScream();
+        }, 300);
+    });
+    
+    // Выход из полноэкранного режима по нажатию ESC или клику
+    document.addEventListener('fullscreenchange', function() {
+        if (!document.fullscreenElement && fullscreenDiv.style.display === 'block') {
+            fullscreenDiv.style.display = 'none';
+        }
+    });
+    
+    fullscreenDiv.addEventListener('click', function() {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        }
+        fullscreenDiv.style.display = 'none';
+    });
+</script>
+</body>
+</html>
